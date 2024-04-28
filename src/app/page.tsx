@@ -4,9 +4,14 @@ import { List, lists } from "@component/data/list";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
+interface ListWithTimer extends List {
+  timerId?: number | null;
+}
 export default function Home() {
-  const [datas, setDatas] = useState<List[]>(lists);
-  const [fruitsAndVegetables, setFruitsAndVegetables] = useState<List[]>([]);
+  const [datas, setDatas] = useState<ListWithTimer[]>(lists);
+  const [fruitsAndVegetables, setFruitsAndVegetables] = useState<
+    ListWithTimer[]
+  >([]);
   const handleClick = (value: List) => {
     const existingFruitsAndVegetables = fruitsAndVegetables.find(
       (data) => data.name === value.name
@@ -18,19 +23,24 @@ export default function Home() {
       setDatas([...datas, value]);
       return;
     }
-    setFruitsAndVegetables([...fruitsAndVegetables, value]);
+    const date = new Date();
+    date.setSeconds(date.getSeconds() + 5);
+    setFruitsAndVegetables([
+      ...fruitsAndVegetables,
+      { ...value, timerId: date.getTime() },
+    ]);
     setDatas(datas.filter((data) => data.name !== value.name));
   };
 
   useEffect(() => {
     if (fruitsAndVegetables.length !== 0) {
-      const timers = fruitsAndVegetables.map((data, index) => {
+      const timers = fruitsAndVegetables.map((data) => {
         return setTimeout(() => {
           setFruitsAndVegetables(
             fruitsAndVegetables.filter((list) => list.name !== data.name)
           );
-          setDatas([...datas, data]);
-        }, (index + 1) * 5000);
+          setDatas([...datas, { ...data, timerId: null }]);
+        }, data.timerId! - Date.now());
       });
       return () => timers.forEach(clearTimeout);
     }
